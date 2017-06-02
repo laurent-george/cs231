@@ -12,7 +12,7 @@ class TwoLayerNet(object):
     softmax loss that uses a modular layer design. We assume an input dimension
     of D, a hidden dimension of H, and perform classification over C classes.
 
-    The architecure should be affine - relu - affine - softmax.
+    The architecture should be affine - relu - affine - softmax.
 
     Note that this class does not implement gradient descent; instead, it
     will interact with a separate Solver object that is responsible for running
@@ -39,6 +39,7 @@ class TwoLayerNet(object):
         self.params = {}
         self.reg = reg
 
+
         ############################################################################
         # TODO: Initialize the weights and biases of the two-layer net. Weights    #
         # should be initialized from a Gaussian with standard deviation equal to   #
@@ -47,11 +48,17 @@ class TwoLayerNet(object):
         # weights and biases using the keys 'W1' and 'b1' and second layer weights #
         # and biases using the keys 'W2' and 'b2'.                                 #
         ############################################################################
-        pass
-        ############################################################################
-        #                             END OF YOUR CODE                             #
-        ############################################################################
 
+        W1 = (np.random.randn(input_dim, hidden_dim) * weight_scale)
+        b1 = np.zeros(input_dim)
+
+        W2 = (np.random.randn(hidden_dim, num_classes) * weight_scale)
+        b2 = np.zeros(hidden_dim)
+
+        self.params['W1'] = W1
+        self.params['b1'] = b1
+        self.params['W2'] = W2
+        self.params['b2'] = b2
 
     def loss(self, X, y=None):
         """
@@ -77,7 +84,12 @@ class TwoLayerNet(object):
         # TODO: Implement the forward pass for the two-layer net, computing the    #
         # class scores for X and storing them in the scores variable.              #
         ############################################################################
-        pass
+        first_layer_out, first_layer_cache = affine_relu_forward(X, self.params['W1'], self.params['b1'])
+        second_layer_out, second_layer_cache = affine_forward(first_layer_out, self.params['W2'], self.params['b2'])
+
+        scores = second_layer_out
+
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -97,7 +109,32 @@ class TwoLayerNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, grads_soft_max = softmax_loss(scores, y)
+        # TODO: finish the gradient -> in case of regularization.. the gradient change too ?
+        layer2_dx, layer2_dw, layer2_db = affine_backward(grads_soft_max, second_layer_cache)
+        layer1_dx, layer1_dw, layer1_db = affine_relu_backward(layer2_dx, first_layer_cache)
+
+        if self.reg != 0:
+            # adding L2 regularization
+            regularization_factor = 0.5 * self.reg
+            loss += np.sum(regularization_factor * self.params['W1'] ** 2)
+            loss += np.sum(regularization_factor * self.params['W2'] ** 2)
+
+            layer1_dw += self.reg * self.params['W1']
+            layer2_dw += self.reg * self.params['W2']
+
+
+
+
+
+
+
+        grads['W2'] = layer2_dw
+        grads['W1'] = layer1_dw
+
+
+
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
