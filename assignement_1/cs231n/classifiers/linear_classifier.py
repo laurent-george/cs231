@@ -30,6 +30,7 @@ class LinearClassifier(object):
     Outputs:
     A list containing the value of the loss function at each training iteration.
     """
+    # TODO LAURENT FINISH THAT
     num_train, dim = X.shape
     num_classes = np.max(y) + 1 # assume y takes values 0...K-1 where K is number of classes
     if self.W is None:
@@ -124,7 +125,12 @@ class LinearSVM(LinearClassifier):
   """ A subclass that uses the Multiclass SVM loss function """
 
   def loss(self, X_batch, y_batch, reg):
-    return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
+    print("Vectorized not implemented yet.. using naive for now")
+    return svm_loss_naive(self.W, X_batch, y_batch, reg)
+
+    #return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
+
+
 
 
 class Softmax(LinearClassifier):
