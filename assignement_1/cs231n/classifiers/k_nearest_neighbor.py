@@ -73,7 +73,8 @@ class KNearestNeighbor(object):
         # training point, and store the result in dists[i, j]. You should   #
         # not use a loop over dimension.                                    #
         #####################################################################
-        pass
+        dists[i, j] = np.sqrt(np.sum((self.X_train[j] - X[i])**2))
+
         #####################################################################
         #                       END OF YOUR CODE                            #
         #####################################################################
@@ -95,7 +96,7 @@ class KNearestNeighbor(object):
       # Compute the l2 distance between the ith test point and all training #
       # points, and store the result in dists[i, :].                        #
       #######################################################################
-      pass
+      dists[i, :] = np.sqrt(np.sum((self.X_train[:] - X[i])**2, axis=1))
       #######################################################################
       #                         END OF YOUR CODE                            #
       #######################################################################
@@ -123,7 +124,22 @@ class KNearestNeighbor(object):
     # HINT: Try to formulate the l2 distance using matrix multiplication    #
     #       and two broadcast sums.                                         #
     #########################################################################
-    pass
+
+    # l'astuce: (a-b)**2 == a**2 + b ** 2 - 2*a*b
+    # notons A = sum(a**2), B = sum(b**2), -2*a*b = C
+
+    A = np.sum(X**2, axis=1)
+    B = np.sum(self.X_train**2, axis=1)[:, None]  # pour garder un truc de la forme [5000, 1]
+    C = -2 * (self.X_train @ X.transpose())
+    print(A.shape)
+    print(B.shape)
+    print(C.shape)
+
+    dists = np.sqrt(A + B + C).transpose()
+    #print(dists)
+
+
+
     #########################################################################
     #                         END OF YOUR CODE                              #
     #########################################################################
@@ -136,7 +152,7 @@ class KNearestNeighbor(object):
 
     Inputs:
     - dists: A numpy array of shape (num_test, num_train) where dists[i, j]
-      gives the distance betwen the ith test point and the jth training point.
+      gives the distance between the ith test point and the jth training point.
 
     Returns:
     - y: A numpy array of shape (num_test,) containing predicted labels for the
@@ -147,7 +163,6 @@ class KNearestNeighbor(object):
     for i in xrange(num_test):
       # A list of length k storing the labels of the k nearest neighbors to
       # the ith test point.
-      closest_y = []
       #########################################################################
       # TODO:                                                                 #
       # Use the distance matrix to find the k nearest neighbors of the ith    #
@@ -155,7 +170,8 @@ class KNearestNeighbor(object):
       # neighbors. Store these labels in closest_y.                           #
       # Hint: Look up the function numpy.argsort.                             #
       #########################################################################
-      pass
+      closest_y = np.argsort(dists[i])
+      labels = self.y_train[closest_y][0:k]
       #########################################################################
       # TODO:                                                                 #
       # Now that you have found the labels of the k nearest neighbors, you    #
@@ -163,7 +179,15 @@ class KNearestNeighbor(object):
       # Store this label in y_pred[i]. Break ties by choosing the smaller     #
       # label.                                                                #
       #########################################################################
-      pass
+
+      count_hash_map = dict()
+      for label in labels:
+          if label not in count_hash_map:
+              count_hash_map[label] = 0
+          count_hash_map[label] += 1
+      label = max(count_hash_map, key=lambda x: count_hash_map[x])
+      y_pred[i] = label
+
       #########################################################################
       #                           END OF YOUR CODE                            # 
       #########################################################################
