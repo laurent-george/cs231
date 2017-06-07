@@ -50,10 +50,10 @@ class TwoLayerNet(object):
         ############################################################################
 
         W1 = (np.random.randn(input_dim, hidden_dim) * weight_scale)
-        b1 = np.zeros(input_dim)
+        b1 = np.zeros(hidden_dim)
 
         W2 = (np.random.randn(hidden_dim, num_classes) * weight_scale)
-        b2 = np.zeros(hidden_dim)
+        b2 = np.zeros(num_classes)
 
         self.params['W1'] = W1
         self.params['b1'] = b1
@@ -61,7 +61,7 @@ class TwoLayerNet(object):
         self.params['b2'] = b2
 
     def loss(self, X, y=None):
-        """
+        self.parameters__ = """
         Compute loss and gradient for a minibatch of data.
 
         Inputs:
@@ -125,14 +125,10 @@ class TwoLayerNet(object):
 
 
 
-
-
-
-
         grads['W2'] = layer2_dw
         grads['W1'] = layer1_dw
-
-
+        grads['b1'] = layer1_db
+        grads['b2'] = layer2_db
 
 
         ############################################################################
