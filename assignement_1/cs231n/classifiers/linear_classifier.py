@@ -54,7 +54,10 @@ class LinearClassifier(object):
       # Hint: Use np.random.choice to generate indices. Sampling with         #
       # replacement is faster than sampling without replacement.              #
       #########################################################################
-      pass
+      batch_idx = np.random.choice(xrange(num_train), batch_size, replace=True)
+      X_batch = X[batch_idx]
+      y_batch = y[batch_idx]
+
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -68,7 +71,7 @@ class LinearClassifier(object):
       # TODO:                                                                 #
       # Update the weights using the gradient and the learning rate.          #
       #########################################################################
-      pass
+      self.W += - learning_rate * grad
       #########################################################################
       #                       END OF YOUR CODE                                #
       #########################################################################
@@ -97,7 +100,8 @@ class LinearClassifier(object):
     # TODO:                                                                   #
     # Implement this method. Store the predicted labels in y_pred.            #
     ###########################################################################
-    pass
+    print(self.W.shape)
+    y_pred = np.argmax(X @ self.W, axis=1)
     ###########################################################################
     #                           END OF YOUR CODE                              #
     ###########################################################################
@@ -125,7 +129,7 @@ class LinearSVM(LinearClassifier):
   """ A subclass that uses the Multiclass SVM loss function """
 
   def loss(self, X_batch, y_batch, reg):
-    print("Vectorized not implemented yet.. using naive for now")
+    #print("Vectorized not implemented yet.. using naive for now")
     return svm_loss_naive(self.W, X_batch, y_batch, reg)
 
     #return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
