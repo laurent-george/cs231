@@ -131,9 +131,9 @@ class KNearestNeighbor(object):
     A = np.sum(X**2, axis=1)
     B = np.sum(self.X_train**2, axis=1)[:, None]  # pour garder un truc de la forme [5000, 1]
     C = -2 * (self.X_train @ X.transpose())
-    print(A.shape)
-    print(B.shape)
-    print(C.shape)
+    #print(A.shape)
+    #print(B.shape)
+    #print(C.shape)
 
     dists = np.sqrt(A + B + C).transpose()
     #print(dists)
