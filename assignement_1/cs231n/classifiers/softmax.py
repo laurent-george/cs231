@@ -30,7 +30,30 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+
+  scores = X @ W   # (N, C) shape , N - number of elem in batch, C number of class
+  max_score = np.max(scores, axis=1)  # max scores for each elem in batch
+  # defining the constant used to limit instability
+  C = - max_score
+  score_stable = scores - C[:, None]
+
+  loss = 0
+  for i in xrange(y.shape[0]):
+      v = np.exp(score_stable[i, y[i]]) / (np.sum(np.exp(score_stable[i, :])))
+      Li = -np.log(v)
+      loss += Li
+
+      # TODO: faire le gradient !!! TODO:  revoir cours
+      #dWi = np.exp(score_stable[i, y[i]]) / (np.sum(np.exp(score_stable[i, :]))) - y[i]
+      #dW[i] = X[i]
+
+  loss /= y.shape[0]
+  # regularization term
+  loss += reg * np.sum(W**2)
+
+
+
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################

@@ -71,6 +71,7 @@ def svm_loss_vectorized(W, X, y, reg):
 
   Inputs and outputs are the same as svm_loss_naive.
   """
+  print("svm..")
   loss = 0.0
   dW = np.zeros(W.shape) # initialize the gradient as zero
 
@@ -79,7 +80,34 @@ def svm_loss_vectorized(W, X, y, reg):
   # Implement a vectorized version of the structured SVM loss, storing the    #
   # result in loss.                                                           #
   #############################################################################
-  pass
+  scores = X @ W
+
+  num_train = X.shape[0]
+  correct_class_score = scores[np.arange(num_train), y]
+
+  margins = scores[:, :] - correct_class_score[:, None] + 1
+  margins[margins<=0] = 0
+  print(margins[0, :])
+
+  # if y[i] ==j -> set margins to 0
+  margins[np.arange(num_train), y] = 0
+  print(margins[0, :])
+
+  loss = np.sum(margins) / num_train
+
+  # TODO: finir le gradient..
+
+  count = np.sum(margins > 0, axis=1)
+  tab = np.sum((-count[:, None] * X), axis=1)
+  print(tab.shape)
+
+  #dW[:, j] =
+
+  #dW[:, y] = tab
+  #dW[:, j] += X[i]
+  #dW[:, y[i]] += - count * X[i]
+  print(count.shape)
+
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
