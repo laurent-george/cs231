@@ -76,7 +76,13 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    L1 = X @ W1 + b1
+    # RELU activation function:
+    L1 = np.maximum(0, L1)
+
+    L2 = L1 @ W2 + b2
+    scores = L2
+
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -93,6 +99,11 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
+    loss = 0
+    loss += np.sum(W1**2) + np.sum(W2**2)   # regularization part
+    # TODO: finir softmax loss en vectorized.. pour pouvoir utiliser ici
+    #loss +=
+
     pass
     #############################################################################
     #                              END OF YOUR CODE                             #
