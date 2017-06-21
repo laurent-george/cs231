@@ -38,18 +38,25 @@ def softmax_loss_naive(W, X, y, reg):
   score_stable = scores - C[:, None]
 
   loss = 0
-  for i in xrange(y.shape[0]):
+  nb_elem_in_training_set = y.shape[0]
+  nb_class = W.shape[1]
+  for i in xrange(nb_elem_in_training_set):
       v = np.exp(score_stable[i, y[i]]) / (np.sum(np.exp(score_stable[i, :])))
       Li = -np.log(v)
       loss += Li
 
-      # TODO: faire le gradient !!! TODO:  revoir cours
-      #dWi = np.exp(score_stable[i, y[i]]) / (np.sum(np.exp(score_stable[i, :]))) - y[i]
-      #dW[i] = X[i]
+      for j in range(nb_class):
+        dW[:, j] += X[i] * np.exp(score_stable[i, j]) / np.sum(np.exp(score_stable[i, :]), axis=0)
+        if j == y[i]:
+            dW[:, j] -= X[i]
+
 
   loss /= y.shape[0]
+  dW = (1.0 / nb_elem_in_training_set)  * dW
   # regularization term
   loss += reg * np.sum(W**2)
+  dW += reg * W
+
 
 
 
