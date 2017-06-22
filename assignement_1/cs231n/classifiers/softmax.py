@@ -67,6 +67,16 @@ def softmax_loss_naive(W, X, y, reg):
 
   return loss, dW
 
+def softmax_func(A, y):
+    """
+    vectorized version of softmax function
+    """
+    # first we create a mask to select only the predicted score for the real class, it's tricky but works fine
+    mask_y = A[np.arange(y.shape[0]), y]
+                        
+    num =  np.exp(mask_y)
+    denum = np.sum(np.exp(A), axis=1)
+    return num, denum
 
 def softmax_loss_vectorized(W, X, y, reg):
   """
@@ -84,10 +94,72 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  D = X.shape[0]
+  scores = X @ W  # so we have D values in z (z is the score)
+  
+  
+  max_score = np.max(scores, axis=1)  # max scores for each elem in batch
+  # defining the constant used to limit instability
+  C = - max_score
+  scores_stable = scores - C[:, np.newaxis]
+  
+  num, denum = softmax_func(scores_stable, y)
+  loss = np.sum(-np.log(num/denum)) / D + reg * np.sum(W**2)
+  
+  # NOW the gradient..
+  a = np.exp(scores_stable)
+  b = np.sum(np.exp(scores_stable), axis=1)[:, None]
+  c = a/b
+  dW = X.transpose() @ c
+  #print("resulting shape is {}".format(dW.shape))
+  
+  
+  
+  # On cree une matrice avec des 1 dans les cases [i,j] ssi classe(du sample j) == i
+  # et on utilise cette matric pour calculer la matrice qui contient les valeurs à soustraire de dW
+  # Cf cahier
+  Y = np.zeros( (X.shape[0], W.shape[1]) ) 
+  Y[ np.arange(y.shape[0]), y] = 1
+  res = - np.transpose(X) @ Y
+  #print(res.shape)
+  dW += res
+      
+  #temp = num, denum, scores_stable
+  dW /=  y.shape[0]
+  # regularization term
+  dW += reg * W
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
 
   return loss, dW
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
