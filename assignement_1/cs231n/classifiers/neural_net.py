@@ -4,6 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 from past.builtins import xrange
 
+def softmax_func(A, y):
+    """
+    vectorized version of softmax function
+    """
+    # first we create a mask to select only the predicted score for the real class, it's tricky but works fine
+    mask_y = A[np.arange(y.shape[0]), y]
+                        
+    num =  np.exp(mask_y)
+    denum = np.sum(np.exp(A), axis=1)
+    return num/denum
+
 class TwoLayerNet(object):
   """
   A two-layer fully-connected neural network. The net has an input dimension of
@@ -99,17 +110,18 @@ class TwoLayerNet(object):
     # in the variable loss, which should be a scalar. Use the Softmax           #
     # classifier loss.                                                          #
     #############################################################################
-    loss = 0
-    loss += np.sum(W1**2) + np.sum(W2**2)   # regularization part
-    # TODO: finir softmax loss en vectorized.. pour pouvoir utiliser ici
-    #loss +=
-
-    pass
+    scores_stable = scores - np.max(scores, axis=1)[:, np.newaxis]
+    loss = - np.sum(np.log(softmax_func(scores_stable, y))) / N 
+    reg1 = reg * (np.sum(W1**2)) # + np.sum(b1**2))
+    reg2 = reg * (np.sum(W2**2)) # + np.sum(b2**2))
+    loss += reg1
+    loss += reg2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
 
     # Backward pass: compute gradients
+    # TODO Laurent le backward
     grads = {}
     #############################################################################
     # TODO: Compute the backward pass, computing the derivatives of the weights #

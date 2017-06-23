@@ -94,7 +94,7 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  D = X.shape[0]
+  N = X.shape[0]
   scores = X @ W  # so we have D values in z (z is the score)
   
   
@@ -104,7 +104,7 @@ def softmax_loss_vectorized(W, X, y, reg):
   scores_stable = scores - C[:, np.newaxis]
   
   num, denum = softmax_func(scores_stable, y)
-  loss = np.sum(-np.log(num/denum)) / D + reg * np.sum(W**2)
+  loss = np.sum(-np.log(num/denum)) / N + reg * np.sum(W**2)
   
   # NOW the gradient..
   a = np.exp(scores_stable)
@@ -113,6 +113,8 @@ def softmax_loss_vectorized(W, X, y, reg):
   dW = X.transpose() @ c
   #print("resulting shape is {}".format(dW.shape))
   
+  
+  # TODO: alternative : compute dScores.. and use it to compute DW using chain rule (like when doing backprop)
   
   
   # On cree une matrice avec des 1 dans les cases [i,j] ssi classe(du sample j) == i
