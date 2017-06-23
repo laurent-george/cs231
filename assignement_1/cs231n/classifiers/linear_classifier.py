@@ -10,6 +10,8 @@ class LinearClassifier(object):
 
   def __init__(self):
     self.W = None
+    
+
 
   def train(self, X, y, learning_rate=1e-3, reg=1e-5, num_iters=100,
             batch_size=200, verbose=False):
@@ -17,7 +19,7 @@ class LinearClassifier(object):
     Train this linear classifier using stochastic gradient descent.
 
     Inputs:
-    - X: A numpy array of shape (N, D) containing training data; there are N
+    - X: A numpy arrayof shape (N, D) containing training data; there are N
       training samples each of dimension D.
     - y: A numpy array of shape (N,) containing training labels; y[i] = c
       means that X[i] has label 0 <= c < C for C classes.
@@ -34,7 +36,7 @@ class LinearClassifier(object):
     num_classes = np.max(y) + 1 # assume y takes values 0...K-1 where K is number of classes
     if self.W is None:
       # lazily initialize W
-      self.W = 0.001 * np.random.randn(dim, num_classes)
+      self.W = 0.001 * np.random.randn(dim, num_classes)  # <-- do we have nan here ?
 
     # Run stochastic gradient descent to optimize W
     loss_history = []
@@ -99,7 +101,6 @@ class LinearClassifier(object):
     # TODO:                                                                   #
     # Implement this method. Store the predicted labels in y_pred.            #
     ###########################################################################
-    print(self.W.shape)
     y_pred = np.argmax(X @ self.W, axis=1)
     ###########################################################################
     #                           END OF YOUR CODE                              #
@@ -128,10 +129,9 @@ class LinearSVM(LinearClassifier):
   """ A subclass that uses the Multiclass SVM loss function """
 
   def loss(self, X_batch, y_batch, reg):
-    #print("Vectorized not implemented yet.. using naive for now")
-    return svm_loss_naive(self.W, X_batch, y_batch, reg)
+    #return svm_loss_naive(self.W, X_batch, y_batch, reg)
 
-    #return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
+    return svm_loss_vectorized(self.W, X_batch, y_batch, reg)
 
 
 
