@@ -137,21 +137,39 @@ def svm_loss_vectorized(W, X, y, reg):
   #Y = np.zeros( (X.shape[0], W.shape[1]) ) 
   
   # we reuse margins array here.. as Y should be close to margins except for the count part
-  Y = margins.copy()
-  Y[Y>0] = 1
-  Y[Y<=0] = 0
+  #Y = margins.copy()
+  #Y[Y>0] = 1
+  #Y[Y<=0] = 0
   
   # set -1 when j == y[i] meaning for the correct class
-  cur_count = np.sum(Y >0, axis=1)
-  Y[ np.arange(y.shape[0]), y] = -1 * cur_count
+  #cur_count = np.sum(Y >0, axis=1)
+  #Y[ np.arange(y.shape[0]), y] = -1 * cur_count
   
   # we use this matrix to build dW
-  dW = np.transpose(X) @ Y
+  #dW = np.transpose(X) @ Y
   
-  dW /= num_train
+  #dW /= num_train
   
   # regularization of dW term
+  #dW += reg * W
+  
+  
+  # alternative way
+  
+  # d(margin)/dscores
+  dmargin = margins.copy()
+  dmargin[dmargin <=0] = 0   # derivative of maximum between 0, negative value  -> does not depends on the negative value.. so it's 0
+  dmargin[dmargin > 0] = 1   # now the derivative is the derivative of the score - a + 1 .. which is 1
+  # d(scorers)/dW
+  dscores = np.transpose(X)
+  
+  # dLoss/dW
+  dW = dscores @ dmargin
+  dW /= num_train
+  
+  # we add the regulalization term
   dW += reg * W
+  
   #############################################################################
   #                             END OF YOUR CODE                              #
   #############################################################################
