@@ -112,8 +112,8 @@ class TwoLayerNet(object):
     #############################################################################
     scores_stable = scores - np.max(scores, axis=1)[:, np.newaxis]
     loss = - np.sum(np.log(softmax_func(scores_stable, y))) / N 
-    reg1 = reg * (np.sum(W1**2)) # + np.sum(b1**2))
-    reg2 = reg * (np.sum(W2**2)) # + np.sum(b2**2))
+    reg1 =  reg * (np.sum(W1**2)) # + np.sum(b1**2))
+    reg2 =  reg * (np.sum(W2**2)) # + np.sum(b2**2))
     loss += reg1
     loss += reg2
     #############################################################################
@@ -121,14 +121,66 @@ class TwoLayerNet(object):
     #############################################################################
 
     # Backward pass: compute gradients
-    # TODO Laurent le backward
     grads = {}
     #############################################################################
     # TODO: Compute the backward pass, computing the derivatives of the weights #
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    
+    
+    
+    # get unnormalized probabilities
+    exp_scores = np.exp(scores)
+    # normalize them for each example
+    probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+    # compute dLi/dscores:
+    dscores = probs
+    dscores[range(N), y] -= 1
+    dscores /= N
+    
+    # applying chain rule  (and that we also known that scores = L1 @ W2 + b )
+    #diff_scores_on_W2 = np.transpose(X)
+    #diff_scores_on_b2 = np.ones((b2.shape))
+    db2 = np.sum(dscores, axis=0)
+    dW2 = np.transpose(L1) @ dscores
+    
+    # and adding regularization term
+    dW2 += reg * W2 * 2
+    
+    grads['b2'] = db2
+    grads['W2'] = dW2
+    
+    
+    # now for W1 and b1
+    # let's say L1 = max(0, y) 
+    
+    # following the course:
+    dL1 = dscores @ np.transpose(W2)
+    
+    # now we need to backpropagate the relu, relu is just a switch
+    dL1[L1<=0] = 0
+    
+    # finaly into W1 and b1
+    db1 = np.sum(dL1, axis=0)
+    dW1 = np.transpose(X) @ dL1
+    
+    # adding regularization
+    dW1 += reg * W1 * 2
+    
+    grads['b1'] = db1
+    grads['W1'] = dW1
+    
+    
+    
+    
+    
+    
+    # we first compute derivatives of dscores
+    
+    
+    
+    
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -172,7 +224,10 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      index_choosen = np.random.choice(np.arange(len(y_val)), batch_size)
+      X_batch = X[index_choosen]
+      y_batch = y[index_choosen]
+      
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -187,7 +242,10 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      for key in ['W1', 'b1', 'W2', 'b2']:
+        self.params[key] += -learning_rate * grads[key]
+      
+      
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -228,11 +286,25 @@ class TwoLayerNet(object):
       to have class c, where 0 <= c < C.
     """
     y_pred = None
+    
 
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    W1 = self.params['W1']
+    b1 = self.params['b1']
+    W2 = self.params['W2']
+    b2 = self.params['b2']
+    
+    L1 = X @ W1 + b1
+    # RELU activation function:
+    L1 = np.maximum(0, L1)
+
+    L2 = L1 @ W2 + b2
+    scores = L2
+    
+    y_pred = np.argmax(scores, axis=1)
+    
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################

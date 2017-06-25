@@ -120,16 +120,34 @@ def softmax_loss_vectorized(W, X, y, reg):
   # On cree une matrice avec des 1 dans les cases [i,j] ssi classe(du sample j) == i
   # et on utilise cette matric pour calculer la matrice qui contient les valeurs à soustraire de dW
   # Cf cahier
-  Y = np.zeros( (X.shape[0], W.shape[1]) ) 
-  Y[ np.arange(y.shape[0]), y] = 1
-  res = - np.transpose(X) @ Y
-  #print(res.shape)
-  dW += res
+ # Y = np.zeros( (X.shape[0], W.shape[1]) ) 
+ # Y[ np.arange(y.shape[0]), y] = 1
+ # res = - np.transpose(X) @ Y
+ # #print(res.shape)
+ # dW += res
       
-  #temp = num, denum, scores_stable
-  dW /=  y.shape[0]
-  # regularization term
+ # #temp = num, denum, scores_stable
+ # dW /=  y.shape[0]
+ # # regularization term
+ # dW += reg * W
+  
+  
+  # alternative laurent
+  # d(score)/dW
+  # get unnormalized probabilities
+  exp_scores = np.exp(scores)
+  # normalize them for each example
+  probs = exp_scores / np.sum(exp_scores, axis=1, keepdims=True)
+  dscores = probs
+  dscores[range(N), y] -= 1
+  dscores /= N
+  
+  dW = np.transpose(X) @ dscores
+  db = np.sum(dscores, axis=0, keepdims=True)  # cf http://cs231n.github.io/neural-networks-case-study/#grad
+  # we add regularization
   dW += reg * W
+  
+  
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
