@@ -196,7 +196,18 @@ class FullyConnectedNet(object):
         # beta2, etc. Scale parameters should be initialized to one and shift      #
         # parameters should be initialized to zero.                                #
         ############################################################################
-        pass
+        
+        cur_input_dim = input_dim
+        
+        for layer_num in range(len(hidden_dims)):
+            cur_hiden_dim = hidden_dims[layer_num]
+            self.params['W{}'.format(layer_num)] = np.random.randn(cur_input_dim, cur_hiden_dim) * weight_scale
+            self.params['b{}'.format(layer_num)] = np.zeros(cur_hiden_dim)
+            cur_input_dim = cur_hiden_dim
+            
+        # TODO: do batch normalization
+        
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -254,6 +265,31 @@ class FullyConnectedNet(object):
         # self.bn_params[1] to the forward pass for the second batch normalization #
         # layer, etc.                                                              #
         ############################################################################
+        out = {}
+        cache = {}
+        cur_input = X
+        nb_hidden_layers = self.num_layers - 1
+        for layer_num in range(nb_hidden_layers):
+            W = self.params["W{}".format(layer_num)]
+            b = self.params["b{}".format(layer_num)]
+            layer_name = "layer{}".format(layer_num)
+            
+            forward_func = affine_relu_forward
+            if layer_num == nb_hidden_layers -1:  # last layer
+                forward_func = affine_forward
+                
+            
+            out[layer_name], cache[layer_name] = forward_func(cur_input, W, b)
+            
+            cur_input = out[layer_name]
+        
+            
+        #second_layer_out, second_layer_cache = affine_forward(first_layer_out, self.params['W2'], self.params['b2'])
+        last_layer_name = "layer{}".format(nb_hidden_layers - 1)  
+        scores = out[last_layer_name]
+        
+        
+        # TODO: do dropout and batchnormalization optional part
         pass
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -277,9 +313,54 @@ class FullyConnectedNet(object):
         # automated tests, make sure that your L2 regularization includes a factor #
         # of 0.5 to simplify the expression for the gradient.                      #
         ############################################################################
-        pass
+        loss, grads_soft_max = softmax_loss(scores, y)
+        
+        grads = {}
+        cur_dout = grads_soft_max
+        for layer_num in range(nb_hidden_layers)[::-1]:
+            dx_name = "X{}".format(layer_num)
+            dw_name = "W{}".format(layer_num)
+            db_name = "b{}".format(layer_num)
+            cur_cache = cache["layer{}".format(layer_num)]
+            
+            if layer_num == nb_hidden_layers - 1:  # we are on last layer
+                backward_func = affine_backward
+            else:
+                backward_func = affine_relu_backward
+            cur_dout, grads[dw_name], grads[db_name] = backward_func(cur_dout, cur_cache)
+            #cur_dout = grads[dx_name]
+        
+        #layer2_dx, layer2_dw, layer2_db = affine_backward(grads_soft_max, second_layer_cache)
+        #layer1_dx, layer1_dw, layer1_db = affine_relu_backward(layer2_dx, first_layer_cache)
+
+        if self.reg != 0:
+            ## adding L2 regularization
+            regularization_factor = 0.5 * self.reg
+            for layer_num in range(self.num_layers - 1):
+                name = "W{}".format(layer_num)
+                loss += np.sum(regularization_factor * self.params[name] ** 2)
+                grads[name] += self.reg * self.params[name]
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
 
         return loss, grads
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
