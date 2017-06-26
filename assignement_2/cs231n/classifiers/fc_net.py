@@ -199,8 +199,12 @@ class FullyConnectedNet(object):
         
         cur_input_dim = input_dim
         
-        for layer_num in range(len(hidden_dims)):
-            cur_hiden_dim = hidden_dims[layer_num]
+        for layer_num in range(self.num_layers):
+            if layer_num == self.num_layers - 1:
+                cur_hiden_dim = num_classes
+            else:
+                cur_hiden_dim = hidden_dims[layer_num]
+            print("Init for layer {}, using input_dim {}, out dim {}".format(layer_num, cur_input_dim, cur_hiden_dim))
             self.params['W{}'.format(layer_num)] = np.random.randn(cur_input_dim, cur_hiden_dim) * weight_scale
             self.params['b{}'.format(layer_num)] = np.zeros(cur_hiden_dim)
             cur_input_dim = cur_hiden_dim
@@ -268,14 +272,13 @@ class FullyConnectedNet(object):
         out = {}
         cache = {}
         cur_input = X
-        nb_hidden_layers = self.num_layers - 1
-        for layer_num in range(nb_hidden_layers):
+        for layer_num in range(self.num_layers):
             W = self.params["W{}".format(layer_num)]
             b = self.params["b{}".format(layer_num)]
             layer_name = "layer{}".format(layer_num)
             
             forward_func = affine_relu_forward
-            if layer_num == nb_hidden_layers -1:  # last layer
+            if layer_num == self.num_layers -1:  # last layer
                 forward_func = affine_forward
                 
             
@@ -285,7 +288,7 @@ class FullyConnectedNet(object):
         
             
         #second_layer_out, second_layer_cache = affine_forward(first_layer_out, self.params['W2'], self.params['b2'])
-        last_layer_name = "layer{}".format(nb_hidden_layers - 1)  
+        last_layer_name = "layer{}".format(self.num_layers - 1)  
         scores = out[last_layer_name]
         
         
@@ -317,13 +320,13 @@ class FullyConnectedNet(object):
         
         grads = {}
         cur_dout = grads_soft_max
-        for layer_num in range(nb_hidden_layers)[::-1]:
+        for layer_num in range(self.num_layers)[::-1]:
             dx_name = "X{}".format(layer_num)
             dw_name = "W{}".format(layer_num)
             db_name = "b{}".format(layer_num)
             cur_cache = cache["layer{}".format(layer_num)]
             
-            if layer_num == nb_hidden_layers - 1:  # we are on last layer
+            if layer_num == self.num_layers - 1:  # we are on last layer
                 backward_func = affine_backward
             else:
                 backward_func = affine_relu_backward
