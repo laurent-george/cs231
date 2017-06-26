@@ -224,9 +224,15 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      index_choosen = np.random.choice(np.arange(len(y_val)), batch_size)
-      X_batch = X[index_choosen]
-      y_batch = y[index_choosen]
+      #index_choosen = np.random.choice(np.arange(len(y_val)), batch_size)  <-- l'erreur était la c'est pas len(y_val) mais len(y) qu'on veut..
+      #index_choosen = np.random.choice(np.arange(len(y)), batch_size)
+      #X_batch = X[index_choosen]
+      #y_batch = y[index_choosen]
+      
+      num_train = X.shape[0]
+      batch_mask = np.random.choice(num_train, batch_size)
+      X_batch = X[batch_mask]
+      y_batch = y[batch_mask]
       
       #########################################################################
       #                             END OF YOUR CODE                          #
