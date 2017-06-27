@@ -209,7 +209,10 @@ class FullyConnectedNet(object):
             self.params['b{}'.format(layer_num)] = np.zeros(cur_hiden_dim)
             cur_input_dim = cur_hiden_dim
             
-        # TODO: do batch normalization
+            if self.use_batchnorm and layer_num < self.num_layers-1:
+                self.params['gamma{}'.format(layer_num)] = np.ones(cur_hiden_dim)
+                self.params['beta{}'.format(layer_num)] = np.zeros(cur_hiden_dim)
+                
         
         
         ############################################################################
@@ -277,12 +280,16 @@ class FullyConnectedNet(object):
             b = self.params["b{}".format(layer_num)]
             layer_name = "layer{}".format(layer_num)
             
-            forward_func = affine_relu_forward
-            if layer_num == self.num_layers -1:  # last layer
-                forward_func = affine_forward
+            if layer_num < self.num_layers -1:
+                if self.use_batchnorm:
+                    gamma = self.params["gamma{}".format(layer_num)]
+                    beta = self.params["beta{}".format(layer_num)]
+                    out[layer_name], cache[layer_name] = affine_batchnorm_relu_forward(cur_input, W, b, gamma, beta, self.bn_params[layer_num]) 
+                else:
+                    out[layer_name], cache[layer_name] = affine_relu_forward(cur_input, W, b)
                 
-            
-            out[layer_name], cache[layer_name] = forward_func(cur_input, W, b)
+            else:  # last layer
+                out[layer_name], cache[layer_name] = affine_forward(cur_input, W, b)
             
             cur_input = out[layer_name]
         
@@ -324,13 +331,18 @@ class FullyConnectedNet(object):
             dx_name = "X{}".format(layer_num)
             dw_name = "W{}".format(layer_num)
             db_name = "b{}".format(layer_num)
+            dgamma_name = "gamma{}".format(layer_num) 
+            dbeta_name = "beta{}".format(layer_num)
             cur_cache = cache["layer{}".format(layer_num)]
             
-            if layer_num == self.num_layers - 1:  # we are on last layer
-                backward_func = affine_backward
+            if layer_num < self.num_layers - 1:  # we are on last layer
+                if self.use_batchnorm:
+                    cur_dout, grads[dw_name], grads[db_name], grads[dgamma_name], grads[dbeta_name] = affine_batchnorm_relu_backward(cur_dout, cur_cache)
+                else:
+                    cur_dout, grads[dw_name], grads[db_name] = affine_relu_backward(cur_dout, cur_cache)
+                
             else:
-                backward_func = affine_relu_backward
-            cur_dout, grads[dw_name], grads[db_name] = backward_func(cur_dout, cur_cache)
+                cur_dout, grads[dw_name], grads[db_name] = affine_backward(cur_dout, cur_cache)
             #cur_dout = grads[dx_name]
         
         #layer2_dx, layer2_dw, layer2_db = affine_backward(grads_soft_max, second_layer_cache)

@@ -160,7 +160,39 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # variance, storing your result in the running_mean and running_var   #
         # variables.                                                          #
         #######################################################################
-        pass
+        #mini_batch_mean = np.mean(x, axis=0)
+        #mini_batch_variance = np.var(x, axis=0)
+        
+        # as we want to do backprop.. we are decomposing the mean/variance into steps that are easily differentiable
+        
+        mini_batch_mean = np.mean(x, axis=0)
+        
+        x_centered = x - mini_batch_mean
+        
+        # to compute variance: E((X-E[X])**2)
+        
+        x_centered_squared = x_centered * x_centered
+        
+        mini_batch_variance = np.mean(x_centered_squared, axis=0)
+        
+        sqrt = np.sqrt(mini_batch_variance + eps)
+        
+        inverse = 1.0 / sqrt
+        
+        #x_normalized = (x - mini_batch_mean) / np.sqrt(mini_batch_variance + eps)
+        x_normalized = x_centered * inverse
+        
+        x_normalized_scaled = gamma * x_normalized
+        
+        x_normalized_scaled_and_shifted = x_normalized_scaled + beta
+        
+        out = x_normalized_scaled_and_shifted
+        
+        cache = (x, eps, gamma, beta, mini_batch_mean, x_centered, x_centered_squared, mini_batch_variance, sqrt, inverse, x_normalized, x_normalized_scaled, x_normalized_scaled_and_shifted)
+        
+        running_mean = momentum * running_mean + (1 - momentum) * mini_batch_mean
+        running_var = momentum * running_var + (1 - momentum) * mini_batch_variance
+        
         #######################################################################
         #                           END OF YOUR CODE                          #
         #######################################################################
@@ -171,7 +203,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         # then scale and shift the normalized data using gamma and beta.      #
         # Store the result in the out variable.                               #
         #######################################################################
-        pass
+        x_normalized = (x - running_mean) / np.sqrt(running_var + eps)
+        out = gamma * x_normalized + beta
         #######################################################################
         #                          END OF YOUR CODE                           #
         #######################################################################
@@ -182,6 +215,8 @@ def batchnorm_forward(x, gamma, beta, bn_param):
     bn_param['running_mean'] = running_mean
     bn_param['running_var'] = running_var
 
+
+    # TODO: what to put into cache ?? 
     return out, cache
 
 
@@ -202,12 +237,51 @@ def batchnorm_backward(dout, cache):
     - dgamma: Gradient with respect to scale parameter gamma, of shape (D,)
     - dbeta: Gradient with respect to shift parameter beta, of shape (D,)
     """
+    
+    # le blog: http://kratzert.github.io/2016/02/12/understanding-the-gradient-flow-through-the-batch-normalization-layer.html m'a bien aidé a debugger/comprendre
     dx, dgamma, dbeta = None, None, None
     ###########################################################################
     # TODO: Implement the backward pass for batch normalization. Store the    #
     # results in the dx, dgamma, and dbeta variables.                         #
     ###########################################################################
-    pass
+    x, epsilon, gamma, beta, mini_batch_mean, x_centered, x_centered_squared, mini_batch_variance, sqrt, inverse, x_normalized, x_normalized_scaled, x_normalized_scaled_and_shifted = cache
+    
+    dbeta = np.sum(dout, axis=0)
+    
+    temp =  x_normalized * dout
+    dgamma = np.sum(temp, axis=0)
+    
+    # pour dx ca devient plus long
+    dx_normalized = gamma * dout
+    
+    d_x_centered_1 = inverse * dx_normalized
+    
+    # l'autre branche... 
+    d_inverse = np.sum(x_centered * dx_normalized, axis=0)
+    
+    d_sqrt = -1 / (sqrt**2) * d_inverse 
+    
+    d_mini_batch_variance = 0.5 / np.sqrt(mini_batch_variance + epsilon) * d_sqrt
+    
+    #print(d_mini_batch_variance.shape)
+    
+    # this one is a bit "complicated" see step4 here http://kratzert.github.io/2016/02/12/understanding-the-gradient-flow-through-the-batch-normalization-layer.html
+    d_x_centered_square = (np.ones(x_centered_squared.shape) / x_centered_squared.shape[0]) * d_mini_batch_variance
+    
+    d_x_centered_2 = 2 * x_centered * d_x_centered_square
+    
+    
+    # whenever we have two gradients coming to one node, we simply add them up.
+    d_x_1 = 1 * (d_x_centered_2 + d_x_centered_1)
+    
+    d_mini_batch_mean = -1 * np.sum( (d_x_centered_1 + d_x_centered_2) , axis=0)
+    
+    d_x_2 = (np.ones(x.shape) / x.shape[0]) * d_mini_batch_mean
+    
+    # TADA :D
+    dx = d_x_1 + d_x_2
+    
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
