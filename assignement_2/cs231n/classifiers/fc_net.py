@@ -274,6 +274,7 @@ class FullyConnectedNet(object):
         ############################################################################
         out = {}
         cache = {}
+        cache_dropout = {}
         cur_input = X
         for layer_num in range(self.num_layers):
             W = self.params["W{}".format(layer_num)]
@@ -288,8 +289,14 @@ class FullyConnectedNet(object):
                 else:
                     out[layer_name], cache[layer_name] = affine_relu_forward(cur_input, W, b)
                 
+                if self.use_dropout:
+                    out[layer_name], cache_dropout[layer_name] = dropout_forward(out[layer_name], self.dropout_param)
+                
             else:  # last layer
                 out[layer_name], cache[layer_name] = affine_forward(cur_input, W, b)
+            
+            
+                
             
             cur_input = out[layer_name]
         
@@ -335,7 +342,13 @@ class FullyConnectedNet(object):
             dbeta_name = "beta{}".format(layer_num)
             cur_cache = cache["layer{}".format(layer_num)]
             
+            
             if layer_num < self.num_layers - 1:  # we are on last layer
+                
+                if self.use_dropout:
+                    cur_cache_dropout = cache_dropout["layer{}".format(layer_num)]
+                    cur_dout = dropout_backward(cur_dout, cur_cache_dropout)
+                
                 if self.use_batchnorm:
                     cur_dout, grads[dw_name], grads[db_name], grads[dgamma_name], grads[dbeta_name] = affine_batchnorm_relu_backward(cur_dout, cur_cache)
                 else:
