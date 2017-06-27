@@ -423,7 +423,31 @@ def conv_forward_naive(x, w, b, conv_param):
     # TODO: Implement the convolutional forward pass.                         #
     # Hint: you can use the function np.pad for padding.                      #
     ###########################################################################
-    pass
+    N, C, H, W = x.shape
+    F, _, HH, WW = w.shape
+    stride = conv_param['stride']
+    pad = conv_param['pad']
+    
+    H_prime = int(1 + (H+2*pad -HH) /stride)
+    W_prime = int(1 + (H+2*pad -WW) /stride)
+    out = np.zeros((N, F, H_prime, W_prime))
+    
+    for n in range(N):
+        for f in range(F):
+            for c in range(C):
+                cur_X = np.pad(x[n, c, :, :], pad, 'constant')
+                filter = w[f, c, :, :]
+                
+                out_top = 0
+                for top in range(0, H, stride):
+                    out_left = 0
+                    for left in range(0, W, stride):
+                        convolution_res = np.sum(filter * cur_X[top:top+HH, left:left+WW]) + b[f]/C
+                        out[n, f, out_top, out_left] += convolution_res
+                        out_left += 1
+                    out_top += 1
+    
+    # TODO: revoir ca pour retrouver un produit en utilisant un reshape.. 
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
