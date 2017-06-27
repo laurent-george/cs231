@@ -442,10 +442,13 @@ def conv_forward_naive(x, w, b, conv_param):
                 for top in range(0, H, stride):
                     out_left = 0
                     for left in range(0, W, stride):
-                        convolution_res = np.sum(filter * cur_X[top:top+HH, left:left+WW]) + b[f]/C
+                        convolution_res = np.sum(filter * cur_X[top:top+HH, left:left+WW])
                         out[n, f, out_top, out_left] += convolution_res
                         out_left += 1
                     out_top += 1
+                    
+    for n in range(N):
+        out[n, :, :, :] += b[:, None, None]
     
     # TODO: revoir ca pour retrouver un produit en utilisant un reshape.. 
     ###########################################################################
@@ -472,7 +475,13 @@ def conv_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
-    pass
+    x, w, b, conv_param = cache
+    
+    # easy db:
+    db = np.sum(dout, axis=(0, 2, 3))
+    
+    
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
