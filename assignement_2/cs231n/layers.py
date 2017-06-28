@@ -476,10 +476,63 @@ def conv_backward_naive(dout, cache):
     # TODO: Implement the convolutional backward pass.                        #
     ###########################################################################
     x, w, b, conv_param = cache
+    stride = conv_param['stride']
+    N, C, H, W = x.shape
+    F, _, HH, WW = w.shape
     
     # easy db:
     db = np.sum(dout, axis=(0, 2, 3))
     
+    # dx
+    pad = conv_param['pad']
+    
+    H_prime = int(1 + (H+2*pad -HH) /stride)
+    W_prime = int(1 + (H+2*pad -WW) /stride)
+    print("N = {}, C={}, H={}, W={}, F={}, HH={}, WW={}, H_prime={}, W_prime={}".format(N, C, H, W, F, HH, WW, H_prime, W_prime))
+    
+    #dx = np.zeros(x.shape)
+    npad = ((0,0), (0,0), (pad,pad), (pad,pad))
+    xpad = np.pad(x, pad_width=npad, mode='constant', constant_values=0)
+    dx = np.zeros_like(xpad)  # pour l'instant on garde un dx plus grand on cropera apres
+    
+    # simple version.. we use similar loop as the one in forward
+    for n in range(N):
+        for f in range(F):
+            for c in range(C):
+                out_top = 0
+                for top in range(0, H, stride):
+                    out_left = 0
+                    for left in range(0, W, stride):
+                        for i in range(top, top+HH):
+                            for j in range(left, left+WW):
+                                # it's just looking for which pixels contribute with wich weight on output 
+                                dx[n, c, i, j] += w[f, c, i-top, j-left] * dout[n, f, out_top, out_left]
+                        out_left += 1
+                    out_top += 1
+    
+    dx = dx[:,:, pad:H+pad, pad:W+pad]
+    
+    
+    # dw
+    dw = np.zeros_like(w)
+    # simple version.. we use similar loop as the one in forward
+    for n in range(N):
+        for f in range(F):
+            for c in range(C):
+                out_top = 0
+                for top in range(0, H, stride):
+                    out_left = 0
+                    for left in range(0, W, stride):
+                        for i in range(top, top+HH):
+                            for j in range(left, left+WW):
+                                # it's just looking for which weight contributes with wich pixel to produce output 
+                                
+                                
+                                # we use the xpad.. as we have 0 it just discard the weight that are used on the pad part
+                                val = xpad[n, c, i, j]
+                                dw[f, c, i-top, j-left] += val * dout[n, f, out_top, out_left]
+                        out_left += 1
+                    out_top += 1
     
     
     ###########################################################################
