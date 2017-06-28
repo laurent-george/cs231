@@ -560,7 +560,30 @@ def max_pool_forward_naive(x, pool_param):
     ###########################################################################
     # TODO: Implement the max pooling forward pass                            #
     ###########################################################################
-    pass
+    
+    N, C, H, W = x.shape
+    pool_height = pool_param['pool_height']
+    pool_width = pool_param['pool_width']
+    #x_reshaped = x.reshape(N, C, H/pool_height, W/pool_width, 
+    
+    stride = pool_param['stride']
+    h_out = int((H - pool_height)/stride  + 1)
+    w_out = int((W - pool_width)/stride  +  1)
+    out = np.zeros((N, C, h_out, w_out))
+    
+    # let's do it naively
+    out_row = 0
+    for row in range(0, H, stride):
+        out_col = 0
+        for col in range(0, W, stride):
+            #print("max on {}:{} ,, {}:{}".format(row, row+pool_height, col, col+pool_width))
+            for n in range(N):
+                for c in range(C):
+                    out[n, c, out_row, out_col] = np.max(x[n, c, row:row+pool_height, col:col+pool_width])
+            out_col += 1
+        out_row += 1
+    
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -583,7 +606,42 @@ def max_pool_backward_naive(dout, cache):
     ###########################################################################
     # TODO: Implement the max pooling backward pass                           #
     ###########################################################################
-    pass
+    #pass
+
+# naive approach, we use similar loop to forward
+    x, pool_param = cache
+    dx = np.zeros_like(x)
+
+    N, C, H, W = x.shape
+    pool_height = pool_param['pool_height']
+    pool_width = pool_param['pool_width']
+    #x_reshaped = x.reshape(N, C, H/pool_height, W/pool_width, 
+    
+    stride = pool_param['stride']
+    h_out = int((H - pool_height)/stride  + 1)
+    w_out = int((W - pool_width)/stride  +  1)
+    out = np.zeros((N, C, h_out, w_out))
+    
+    # let's do it naively
+    out_row = 0
+    for row in range(0, H, stride):
+        out_col = 0
+        for col in range(0, W, stride):
+            #print("max on {}:{} ,, {}:{}".format(row, row+pool_height, col, col+pool_width))
+            for n in range(N):
+                for channel in range(C):
+                    # We are interested only in coordinates where   # < ---- ICI 
+                    res = np.argmax(x[n, channel, row:row+pool_height, col:col+pool_width])
+                    #maxx = np.max(x[n, channel, row:row+pool_height, col:col+pool_width])
+                    pos_x, pos_y = np.unravel_index(res, (pool_height, pool_width))
+                    #print("HxW {}x{}".format(pool_height, pool_width))
+                    #print("res is {} Pos x, y = {}, {}, max is {}, should be {}".format(res, pos_x, pos_y, x[n, channel, row+pos_x, col+pos_y], maxx))
+                    #print("sub tab was {}".format(x[n, channel, row:row+pool_height, col:col+pool_width]))
+                    dx[n, channel, row+pos_x, col+pos_y] += dout[n, channel, out_row, out_col]
+            out_col += 1
+        out_row += 1
+
+
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
