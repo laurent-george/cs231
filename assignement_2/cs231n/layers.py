@@ -188,6 +188,7 @@ def batchnorm_forward(x, gamma, beta, bn_param):
         
         out = x_normalized_scaled_and_shifted
         
+        
         cache = (x, eps, gamma, beta, mini_batch_mean, x_centered, x_centered_squared, mini_batch_variance, sqrt, inverse, x_normalized, x_normalized_scaled, x_normalized_scaled_and_shifted)
         
         running_mean = momentum * running_mean + (1 - momentum) * mini_batch_mean
@@ -679,10 +680,24 @@ def spatial_batchnorm_forward(x, gamma, beta, bn_param):
     # version of batch normalization defined above. Your implementation should#
     # be very short; ours is less than five lines.                            #
     ###########################################################################
-    pass
+    
+    # just flatten over channels
+    N, C, H, W = x.shape
+    x_reshaped = np.transpose(x, [1, 0, 2, 3])
+    x_reshaped = np.transpose(x_reshaped.reshape(C, -1))
+    
+    temp_out, temp_cache = batchnorm_forward(x_reshaped, gamma, beta, bn_param)
+    
+    temp_out = np.transpose(temp_out).reshape([C, N, H, W])
+    temp_out = np.transpose(temp_out, [1, 0, 2, 3])
+    
+    out = temp_out
+    cache = temp_cache
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
+    
 
     return out, cache
 
@@ -709,7 +724,22 @@ def spatial_batchnorm_backward(dout, cache):
     # version of batch normalization defined above. Your implementation should#
     # be very short; ours is less than five lines.                            #
     ###########################################################################
-    pass
+    N, C, H, W = dout.shape
+    
+    dout_reshaped = np.transpose(dout, [0, 2, 3, 1])  # now having N, H, W, C
+    dout_reshaped = dout_reshaped.reshape(N*H*W, C)
+    
+    temp_dx, temp_dgamma, temp_dbeta = batchnorm_backward(dout_reshaped, cache)
+    
+    #print(temp_dx.shape)
+    #print(temp_dgamma.shape)
+    #print(temp_dbeta.shape)
+    
+    
+    dx = temp_dx.reshape((N,H,W,C)).transpose((0,3,1,2))  # now N, C, H, W as expected
+    dgamma = temp_dgamma
+    dbeta = temp_dbeta
+    
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
