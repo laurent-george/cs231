@@ -5,6 +5,8 @@ import numpy as np
 from cs231n.layers import *
 from cs231n.rnn_layers import *
 
+from ..rnn_layers import *
+from ..layers import *
 
 class CaptioningRNN(object):
     """
@@ -138,10 +140,38 @@ class CaptioningRNN(object):
         # gradients for self.params[k].                                            #
         ############################################################################
         # (1)
-        h1 = affine_forward(features, W_proj, b_proj) 
+        h1_images, cache_h1_images = affine_forward(features, W_proj, b_proj) 
         # (2)
-        h1_word = word_embeding_forward(captions_in, W_embed)
-        print(h1_word)
+        h1_words, cache_h1_words = word_embedding_forward(captions_in, W_embed)
+        
+        # (3)
+        h2, cache_h2 = rnn_forward(h1_words, h1_images, Wx, Wh, b)
+        
+        # (4)
+        h3, cache_h3 = temporal_affine_forward(h2, W_vocab, b_vocab)
+        
+        # (5)
+        loss, dx = temporal_softmax_loss(h3, captions_out, mask, verbose=False)
+        
+        
+        # Now the gradients..
+        dx, dW_vocab, db_vocab = temporal_affine_backward(dx, cache_h3)
+        
+        dx, dprev_h, dWx, dWh, db = rnn_backward(dx, cache_h2) 
+        
+        dW_embed = word_embedding_backward(dx, cache_h1_words)
+        
+        dx, dW_proj, db_proj = affine_backward(dprev_h, cache_h1_images)
+        
+        grads['W_vocab'] = dW_vocab
+        grads['b_vocab'] = db_vocab
+        grads['Wx'] = dWx
+        grads['Wh'] = dWh
+        grads['b'] = db
+        grads['W_embed'] = dW_embed
+        grads['W_proj'] = dW_proj
+        grads['b_proj'] = db_proj
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -203,7 +233,31 @@ class CaptioningRNN(object):
         # functions; you'll need to call rnn_step_forward or lstm_step_forward in #
         # a loop.                                                                 #
         ###########################################################################
-        pass
+        h1_images, cache_h1_images = affine_forward(features, W_proj, b_proj) 
+        prev_word = np.array(np.ones((N, 1)) * self._start, dtype=np.int)
+        
+        prev_h = h1_images
+        
+        for time_step in range(max_length):
+            # (1)
+            captions[:, time_step] = prev_word[:, 0]
+            h1_words, _ = word_embedding_forward(prev_word, W_embed)
+            # (2)
+            x_reshape = np.transpose(h1_words, [1, 0, 2])
+            prev_h, _ = rnn_step_forward(x_reshape[0], prev_h, Wx, Wh, b) 
+            
+            current = np.transpose([prev_h], [1, 0, 2])
+            
+            # (3)
+            h3, _ = temporal_affine_forward(np.array(current), W_vocab, b_vocab)
+            # (4)
+            best_words_idx = np.argmax(h3, axis=2)  # getting the index of the maxscores for each words in each timesteps in each sequences
+            prev_word = best_words_idx
+            
+            
+        #print(captions)
+        #captions = prev_words
+        
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
