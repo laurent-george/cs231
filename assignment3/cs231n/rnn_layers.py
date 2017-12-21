@@ -75,9 +75,10 @@ def rnn_step_backward(dnext_h, cache):
     # et a partir de la on peut faire une backprop classique..  (cf backward afine etc..)
     # exemple pour dx
     dx = (val @ Wx.T).reshape(x.shape)
-    
-    db = np.sum(val, axis=0)
-    
+
+    db = np.sum(val, axis=0)  # on somme sur le batch, car on veut le gradient de tout le batch
+    #db = val # pourquoi pas juste val ?
+
     dprev_h = (val @ Wh.T)
     
     dWx = (x.T @ val)
@@ -308,11 +309,13 @@ def lstm_step_forward(x, prev_h, prev_c, Wx, Wh, b):
     f = sigmoid(af)
     o = sigmoid(ao)
     g = np.tanh(ag)
+
+    ig = i * g
+    next_c = f * prev_c + ig
+    temp_tan = np.tanh(next_c)
+    next_h = o * temp_tan
     
-    next_c = f * prev_c + i * g
-    next_h = o * np.tanh(next_c)
-    
-    cache = x, prev_h, prev_c, Wx, Wh, b, a
+    cache = x, prev_h, prev_c, Wx, Wh, b, a, temp_tan, next_h, next_c, o, ig
     ##############################################################################
     #                               END OF YOUR CODE                             #
     ##############################################################################
@@ -338,6 +341,16 @@ def lstm_step_backward(dnext_h, dnext_c, cache):
     - db: Gradient of biases, of shape (4H,)
     """
     dx, dh, dc, dWx, dWh, db = None, None, None, None, None, None
+    x, prev_h, prev_c, Wx, Wh, b, a, temp_tan, next_h, next_c, o, ig = cache
+
+    df_do = next_h * temp_tan
+    df_dtanh = next_h * o
+
+    d_tanh_nextc = (1 - np.tanh(next_c)) * dnext_c
+
+    d_r1_i =
+
+
     #############################################################################
     # TODO: Implement the backward pass for a single timestep of an LSTM.       #
     #                                                                           #
